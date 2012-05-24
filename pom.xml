@@ -38,6 +38,9 @@
         <hpi.plugin.version>1.74</hpi.plugin.version>
         <stapler.version>1.99</stapler.version>
         <jsr305.version>1.3.9</jsr305.version>
+        
+        
+        <hudsonHome>${basedir}/work</hudsonHome>
     </properties>
 
     <developers>
@@ -204,7 +207,57 @@
                     </excludes>
                 </configuration>
             </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+                <inherited>true</inherited>
+            </plugin>
         </plugins>
+        <pluginManagement>
+        	<plugins>
+        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        		<plugin>
+        			<groupId>org.eclipse.m2e</groupId>
+        			<artifactId>lifecycle-mapping</artifactId>
+        			<version>1.0.0</version>
+        			<configuration>
+        				<lifecycleMappingMetadata>
+        					<pluginExecutions>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>
+        									org.jenkins-ci.tools
+        								</groupId>
+        								<artifactId>
+        									maven-hpi-plugin
+        								</artifactId>
+        								<versionRange>
+        									[1.74,)
+        								</versionRange>
+        								<goals>
+        									<goal>insert-test</goal>
+        									<goal>
+        										resolve-test-dependencies
+        									</goal>
+        									<goal>test-hpl</goal>
+        									<goal>validate</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        					</pluginExecutions>
+        				</lifecycleMappingMetadata>
+        			</configuration>
+        		</plugin>
+        	</plugins>
+        </pluginManagement>
     </build>
 
     <scm>
