@@ -39,6 +39,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class JCloudsBuildWrapper extends BuildWrapper {
    private final List<InstancesToRun> instancesToRun;
 
+    // #2 Expose running nodes for later
+   private transient Iterable<RunningNode> runningNode;
+   
+   public Iterable<RunningNode> getRunningNodes() {
+        return runningNode;
+   }	
+
    @DataBoundConstructor
    public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
       this.instancesToRun = instancesToRun;
@@ -86,7 +93,8 @@ public class JCloudsBuildWrapper extends BuildWrapper {
       ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
                MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
-      final Iterable<RunningNode> runningNode = provisioner.apply(nodePlans);
+	// #2 Expose running nodes for later
+      runningNode = provisioner.apply(nodePlans);
 
       return new Environment() {
          @Override
