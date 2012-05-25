@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.jclouds.domain.LoginCredentials;
+
 /**
  * Jenkins Slave node  - managed by JClouds.
  *
@@ -28,6 +30,10 @@ public class JCloudsSlave extends Slave {
     public final boolean stopOnTerminate;
     private String cloudName;
     private String nodeId;
+    
+    // #4 persist credentials
+	private String user;
+	private String privateKey;
     
    @DataBoundConstructor
    public JCloudsSlave(String cloudName,
@@ -75,6 +81,9 @@ public class JCloudsSlave extends Slave {
              stopOnTerminate);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
+        // #4 persist credentials
+		this.user = metadata.getCredentials().getUser();
+		this.privateKey = metadata.getCredentials().getPrivateKey();
     }
 
    /**
@@ -85,7 +94,20 @@ public class JCloudsSlave extends Slave {
    public NodeMetadata getNodeMetaData() {
        if (this.nodeMetaData == null) {
            final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-           this.nodeMetaData = compute.getNodeMetadata(nodeId);
+
+	    // #4 put credentials into CredentialStore to work around the
+	    // in memory nature of the default implementation
+	    if (!compute.getContext().getUtils().credentialStore()
+		    .containsKey("node#" + nodeId))
+		compute.getContext()
+			.getUtils()
+			.credentialStore()
+			.put("node#" + nodeId,
+				LoginCredentials.builder()
+					.privateKey(privateKey).user(user)
+					.build());
+
+	        this.nodeMetaData = compute.getNodeMetadata(nodeId);
        }
        return nodeMetaData;
    }
