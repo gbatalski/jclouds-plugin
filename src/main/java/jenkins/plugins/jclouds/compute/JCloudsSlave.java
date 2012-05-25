@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.jclouds.domain.LoginCredentials;
+import com.google.common.base.Joiner;
 
 /**
  * Jenkins Slave node  - managed by JClouds.
@@ -69,7 +70,9 @@ public class JCloudsSlave extends Slave {
                         final String description, final String numExecutors,
                         final boolean stopOnTerminate) throws IOException, Descriptor.FormException {
         this(cloudName,
-             metadata.getName(),
+		// #3 slave name uniqueness improved
+		Joiner.on("-").join(metadata.getName(),
+			metadata.getId().replaceAll("/", "_")),
              description,
              fsRoot,
              numExecutors,
