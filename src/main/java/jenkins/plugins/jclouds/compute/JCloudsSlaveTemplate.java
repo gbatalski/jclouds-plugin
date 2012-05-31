@@ -2,6 +2,8 @@ package jenkins.plugins.jclouds.compute;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static java.lang.String.format;
+import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 import hudson.Extension;
 import hudson.RelativePath;
@@ -15,7 +17,9 @@ import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
+import java.io.File;
 import java.io.IOException;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -39,10 +43,15 @@ import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.io.Files;
+
 
 /**
  * @author Vijay Kiran
@@ -70,7 +79,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    private final String jenkinsUser;
    private final String fsRoot;
    public final boolean allowSudo;
-   
+
+   public final boolean installChefSoloIfPossible;
+   public final String chefCookbooksGitRepo;
+
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
@@ -95,7 +107,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String jenkinsUser,
                                final boolean preExistingJenkinsUser,
                                final String fsRoot,
-                               final boolean allowSudo) {
+                               final boolean allowSudo,
+                               final boolean installChefSoloIfPossible,
+                               final String chefCookbooksGitRepo) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -116,6 +130,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.preExistingJenkinsUser = preExistingJenkinsUser;
        this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
        this.allowSudo = allowSudo;
+       this.installChefSoloIfPossible = installChefSoloIfPossible;
+       this.chefCookbooksGitRepo = chefCookbooksGitRepo;
        readResolve();
    }
 
@@ -147,15 +163,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
            return fsRoot;
        }
    }
-       
-   
+
+
    public Set<LabelAtom> getLabelSet() {
       return labelSet;
    }
 
    public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
        NodeMetadata nodeMetadata = get();
-       
+
        try {
            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
        } catch (Descriptor.FormException e) {
@@ -199,7 +215,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
       Statement initStatement;
       Statement bootstrap;
-      
+
       if (this.preExistingJenkinsUser) {
     	  initStatement = Statements.exec(this.initScript);
       } else {
@@ -224,14 +240,36 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       } else {
           bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
       }
-      
+
+      if(installChefSoloIfPossible){
+	    // see also
+	    // https://github.com/gbatalski/chef-solo#chef-solo-installation-ubuntudebian
+	    Statement installGitAndChefSoloScript = null;
+	    try {
+		installGitAndChefSoloScript = newStatementList(Statements.exec(Files.toString(
+			new File(this.getClass().getResource("/scripts/install-chef.sh").getFile()),
+			Charsets.UTF_8)),
+		// create solo config for chef-solo and knife (solo)
+			exec(format("export SOLO_DIR=\"`getent passwd %1$s | cut -d: -f6`/chef-solo\"", getJenkinsUser())),
+			Statements.createOrOverwriteFile(
+				String.format("$SOLO_DIR/solo.rb", getJenkinsUser()),
+				ImmutableList.<String> of(Files.toString(new File(this.getClass().getResource("/scripts/solo.rb")
+					.getFile()), Charsets.UTF_8)))
+		);
+	    } catch (IOException e) {
+
+		throw new RuntimeException(e);
+	    }
+
+	    bootstrap = newStatementList(bootstrap, installGitAndChefSoloScript);
+      }
+
       template.getOptions()
             .inboundPorts(22)
             .userMetadata(userMetadata)
             .runScript(bootstrap);
 
       NodeMetadata nodeMetadata = null;
-
 
       try {
          nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
@@ -339,14 +377,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return result;
       }
 
-      
+
       public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
                                                 @RelativePath("..") @QueryParameter String identity,
                                                 @RelativePath("..") @QueryParameter String credential,
                                                 @RelativePath("..") @QueryParameter String endPointUrl) {
 
           ListBoxModel m = new ListBoxModel();
-          
+
           if (Strings.isNullOrEmpty(identity)) {
               LOGGER.warning("identity is null or empty");
               return m;
@@ -366,7 +404,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           identity = Util.fixEmptyAndTrim(identity);
           credential = Util.fixEmptyAndTrim(credential);
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         
+
           ComputeService computeService = null;
           m.add("None specified", "");
           try {
@@ -378,7 +416,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                   m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
                         hardware.getId());
               }
-              
+
           } catch (Exception ex) {
 
           } finally {
