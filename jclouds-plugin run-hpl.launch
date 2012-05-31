@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.m2e.Maven2LaunchConfigurationType">
 <booleanAttribute key="M2_DEBUG_OUTPUT" value="false"/>
-<stringAttribute key="M2_GOALS" value="clean compile package install hpi:hpi hpi:hpl hpi:run"/>
+<stringAttribute key="M2_GOALS" value="clean compile install package hpi:hpl hpi:run"/>
 <booleanAttribute key="M2_NON_RECURSIVE" value="false"/>
 <booleanAttribute key="M2_OFFLINE" value="false"/>
 <stringAttribute key="M2_PROFILES" value=""/>
@@ -26,6 +26,6 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djetty.port=8083 -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000 -XX:MaxPermSize=300m -Xms1g -Xmx2g -Djava.net.preferIPv4Stack=true"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="${jrebel_args} -Djetty.port=8083 -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000 -XX:MaxPermSize=300m -Xms1g -Xmx2g -Djava.net.preferIPv4Stack=true"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:/jclouds-plugin}"/>
 </launchConfiguration>
