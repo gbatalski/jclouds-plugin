@@ -1,10 +1,11 @@
 package jenkins.plugins.jclouds.internal;
 
+
 import hudson.model.BuildListener;
 
 public class BuildListenerLogger implements org.jclouds.logging.Logger {
    private final BuildListener listener;
-   
+
    public BuildListenerLogger(BuildListener listener) {
       this.listener = listener;
    }
@@ -14,11 +15,11 @@ public class BuildListenerLogger implements org.jclouds.logging.Logger {
    }
 
    public void error(String message, Object... args) {
-      listener.fatalError(String.format(message, args));
+	listener.fatalError(format(message, args));
    }
 
    public void error(Throwable throwable, String message, Object... args) {
-      listener.fatalError(String.format(message, args) +": " + throwable.getCause());
+	listener.fatalError(format(message, args) + ": " + throwable.getCause());
    }
 
    public String getCategory() {
@@ -26,7 +27,7 @@ public class BuildListenerLogger implements org.jclouds.logging.Logger {
    }
 
    public void info(String message, Object... args) {
-      listener.getLogger().println(String.format(message, args));
+	listener.getLogger().println(format(message, args));
    }
 
    public boolean isDebugEnabled() {
@@ -49,15 +50,20 @@ public class BuildListenerLogger implements org.jclouds.logging.Logger {
       return true;
    }
 
-   public void trace(String message, Object... args) {         
+   public void trace(String message, Object... args) {
    }
 
    public void warn(String message, Object... args) {
-      listener.error(String.format(message, args));
+	listener.error(format(message, args));
    }
 
    public void warn(Throwable throwable, String message, Object... args) {
-      listener.error(String.format(message, args) +": " + throwable.getCause());
+	listener.error(format(message, args) + ": " + throwable.getCause());
    }
-    
+
+    private static String format(String message, Object... args) {
+	return args == null ? message : String.format(message, args);
+
+    }
+
  }
