@@ -13,6 +13,8 @@ import org.jclouds.scriptbuilder.domain.Statement;
 import org.junit.Test;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+
 
 import edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList;
 
@@ -83,7 +85,7 @@ public class ChefRecipeExecutorFunctionTest {
      */
     @Test
     public void testGetKnifeStatement() {
-	Statement statement = getSample().yieldKnifeStatement("/tmp/solo.rb");
+	Statement statement = getSample().yieldKnifeStatement("/tmp/solo.rb", ImmutableList.<String> of());
 	assertNotNull(statement);
     }
 
