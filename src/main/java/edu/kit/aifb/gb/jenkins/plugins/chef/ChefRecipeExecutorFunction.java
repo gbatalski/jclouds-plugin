@@ -3,7 +3,6 @@
  */
 package edu.kit.aifb.gb.jenkins.plugins.chef;
 
-import static com.google.common.base.Objects.*;
 import static com.google.common.collect.Collections2.*;
 import static com.google.common.collect.Iterables.*;
 import static java.lang.String.*;
@@ -41,16 +40,16 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 
     private final Iterable<Integer> portsToCheck;
 
-    public ChefRecipeExecutorFunction(Iterable<String> recipes, String chefJson, Logger logger, Integer... portsToCheck) {
+    public ChefRecipeExecutorFunction(Iterable<String> cookbooks, String chefJson, Logger logger, Integer... portsToCheck) {
 	super();
-	this.recipes = recipes;
+	this.cookbooks = cookbooks;
 	this.chefJson = chefJson;
 	this.logger = logger;
 	this.portsToCheck = ImmutableList.copyOf(portsToCheck);
 
     }
 
-    private final Iterable<String> recipes;
+    private final Iterable<String> cookbooks;
 
     private final String chefJson;
 
@@ -64,8 +63,7 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 	    final JCloudsSlaveTemplate slaveTemplate = JCloudsCloud.getByName(runningNode.getCloudName()).getTemplate(
 		    nodeMetadata.getName());
 
-	    final RunList runList = firstNonNull(RunList.fromJSON(chefJson), new RunList(recipes));
-	    final String soloJson = firstNonNull(chefJson, runList.toJSON());
+	    final RunList runList = RunList.fromJSON(chefJson);
 
 	    ExecResponse response = JCloudsCloud
 		    .getByName(runningNode.getCloudName())
@@ -80,9 +78,9 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 				    exec("alias rm=\"rm -f\""),
 				    exec("export PATH=\"/usr/local/bin/:/usr/local/sbin/:$PATH\""),
 				    exec("cd $SOLO_DIR"),
-				    runList.yieldKnifeStatement("$SOLO_DIR"),
+				    runList.yieldKnifeStatement("$SOLO_DIR", cookbooks),
 				    exec("cat > solo.json <<EOF\n"
-					    + soloJson.replaceAll("(?:(?:github:(?:[^/]*/)))?([^/]+)(/[^/]+)?", "$1$2") + "\nEOF"),
+					    + chefJson.replaceAll("(?:(?:github:(?:[^/]*/)))?([^/]+)(/[^/]+)?", "$1$2") + "\nEOF"),
 				    exec("chef-solo -c $SOLO_DIR/solo.rb -j  $SOLO_DIR/solo.json")), RunScriptOptions.NONE);
 
 
@@ -140,9 +138,10 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 	    });
 	}
 
-	public Statement yieldKnifeStatement(final String pathToConfig) {
+	public Statement yieldKnifeStatement(final String pathToConfig, final Iterable<String> cookbooks) {
 
 	    return new Function<Iterable<String>, Statement>() {
+
 		@Override
 		public Statement apply(Iterable<String> input) {
 		    Iterable<String> distinctCookbooks = ImmutableSet.copyOf(transform(input, new Function<String, String>() {
@@ -152,7 +151,8 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 			}
 		    }));
 
-		    return newStatementList(toArray(transform(distinctCookbooks, new Function<String, Statement>() {
+		    return newStatementList(toArray(
+			    transform(concat(cookbooks, distinctCookbooks), new Function<String, Statement>() {
 			@Override
 			public Statement apply(String input) {
 			    String statement = "knife cookbook %1$s install %2$s -c %3$s/solo.rb -VV -o %3$s/%4$s";
