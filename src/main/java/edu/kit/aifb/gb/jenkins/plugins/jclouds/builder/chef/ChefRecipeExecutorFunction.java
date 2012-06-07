@@ -8,6 +8,9 @@ import static com.google.common.collect.Iterables.*;
 import static java.lang.String.*;
 import static org.jclouds.scriptbuilder.domain.Statements.*;
 
+import hudson.model.labels.LabelAtom;
+
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
@@ -22,9 +25,12 @@ import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.scriptbuilder.domain.Statement;
 
 import com.google.common.base.Function;
+
 import com.google.common.base.Predicate;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -39,14 +45,16 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
     private final static Predicate<ExecResponse> successChecker = new ExecutionSucceeded();
 
     private final Iterable<Integer> portsToCheck;
+    private final Set<LabelAtom> labelsToRunOn;
 
-    public ChefRecipeExecutorFunction(Iterable<String> cookbooks, String chefJson, Logger logger, Integer... portsToCheck) {
+    public ChefRecipeExecutorFunction(Iterable<String> cookbooks, String chefJson, Logger logger, Set<LabelAtom> labelsToRunOn,
+	    Integer... portsToCheck) {
 	super();
 	this.cookbooks = cookbooks;
 	this.chefJson = chefJson;
 	this.logger = logger;
 	this.portsToCheck = ImmutableList.copyOf(portsToCheck);
-
+	this.labelsToRunOn = labelsToRunOn;
     }
 
     private final Iterable<String> cookbooks;
@@ -59,6 +67,10 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
     public Boolean apply(RunningNode runningNode) {
 	boolean successful = false;
 	try {
+
+	    if (!labelsToRunOn.isEmpty() && Sets.intersection(labelsToRunOn, runningNode.getLabelSet()).isEmpty())
+		return true;
+
 	    final NodeMetadata nodeMetadata = runningNode.getNode();
 	    final JCloudsSlaveTemplate slaveTemplate = JCloudsCloud.getByName(runningNode.getCloudName()).getTemplate(
 		    nodeMetadata.getName());

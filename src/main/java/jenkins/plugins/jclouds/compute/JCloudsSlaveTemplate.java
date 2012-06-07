@@ -89,11 +89,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    private final String jenkinsUser;
    private final String fsRoot;
    public final boolean allowSudo;
+    public final String openPortString;
 
    public final boolean installChefSoloIfPossible;
-   public final String chefCookbooksGitRepo;
 
    private transient Set<LabelAtom> labelSet;
+    private transient Set<Integer> openPorts;
 
    protected transient JCloudsCloud cloud;
 
@@ -119,7 +120,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String fsRoot,
                                final boolean allowSudo,
                                final boolean installChefSoloIfPossible,
-                               final String chefCookbooksGitRepo) {
+ final String openPortString) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -141,7 +142,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
        this.allowSudo = allowSudo;
        this.installChefSoloIfPossible = installChefSoloIfPossible;
-       this.chefCookbooksGitRepo = chefCookbooksGitRepo;
+       this.openPortString = openPortString;
        readResolve();
    }
 
@@ -150,11 +151,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       return cloud;
    }
 
+
+
    /**
     * Initializes data structure that we don't persist.
     */
    protected Object readResolve() {
       labelSet = Label.parse(labelString);
+	openPorts = ImmutableSet.<Integer> copyOf(filterIntegers(openPortString));
+
       return this;
    }
 
@@ -275,7 +280,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       }
 
       template.getOptions()
-            .inboundPorts(22)
+.inboundPorts(concat(new int[] { 22 }, toArray(copyOf(openPorts))))
             .userMetadata(userMetadata)
             .runScript(bootstrap);
 

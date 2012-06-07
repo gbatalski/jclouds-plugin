@@ -1,11 +1,14 @@
 package jenkins.plugins.jclouds.compute;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Label;
+import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
@@ -20,14 +23,31 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
     public final String templateName;
     public final int count;
     public final boolean suspendOrTerminate;
-    
+    public final String labelString;
+
+    private transient Set<LabelAtom> labelSet;
+
     @DataBoundConstructor
-    public InstancesToRun(String cloudName, String templateName, int count, boolean suspendOrTerminate) {
+    public InstancesToRun(String cloudName, String templateName, int count, boolean suspendOrTerminate, String labelString) {
         this.cloudName = Util.fixEmptyAndTrim(cloudName);
         this.templateName = Util.fixEmptyAndTrim(templateName);
         this.count = count;
         this.suspendOrTerminate = suspendOrTerminate;
-    }        
+	this.labelString = labelString;
+	readResolve();
+    }
+
+    /**
+     * Initializes data structure that we don't persist.
+     */
+    protected Object readResolve() {
+	labelSet = Label.parse(labelString);
+	return this;
+    }
+
+    public Set<LabelAtom> getLabelSet() {
+	return labelSet;
+    }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<InstancesToRun> {
@@ -60,4 +80,6 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             return "";
         }
     }
+
+
 }

@@ -3,56 +3,78 @@
  */
 package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef;
 
+import static com.google.common.collect.Iterables.toArray;
 import hudson.Extension;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.BuildListener;
+import hudson.model.Environment;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
+import hudson.model.Label;
+import hudson.model.labels.LabelAtom;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 
 import java.io.IOException;
+import java.util.Set;
 
+import jenkins.plugins.jclouds.compute.JCloudsBuildWrapper;
 import jenkins.plugins.jclouds.compute.internal.RunningNode;
 
 import org.jclouds.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
+
+import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.JCloudsEnabledBuilder;
+import edu.kit.aifb.gb.utils.FilterIntegers;
 
 /**
  *
- * Executes one or more chef recipes
+ * Executes one or more chef cookbooks
  *
  * @author gena
  *
  */
 public class ChefBuilder extends JCloudsEnabledBuilder<ChefBuilder> {
 
-    private final Iterable<String> recipes;
-    private final Iterable<Integer> ports;
+    private final transient Iterable<String> cookbooks;
+    private final transient Iterable<Integer> listeningPorts;
+    private final String portString;
+    private final String labelString;
+    private final String cookbookString;
+
+    private transient Set<LabelAtom> labelSet;
 
     private final String chefJson;
 
     @DataBoundConstructor
-    public ChefBuilder(String recipesAsString, String chefJson, String portsAsString) {
-	this.recipes = Splitter.onPattern("\\s|,|;").split(recipesAsString);
+    public ChefBuilder(String cookbookString, String chefJson, String portString, String labelString) {
 	this.chefJson = chefJson;
-	this.ports = filterIntegers(Splitter.onPattern("\\s|,|;").split(portsAsString));
-
+	this.portString = portString;
+	this.labelString = labelString;
+	this.cookbookString = cookbookString;
+	this.cookbooks = cookbookString == null ? ImmutableSet.<String> of() : Splitter.onPattern("\\s|,|;").split(cookbookString);
+	this.listeningPorts = FilterIntegers.filterIntegers(portString);
+	readResolve();
     }
 
-    public String getRecipesAsString() {
-	return isEmpty(recipes) ? "" : Joiner.on(" ").join(recipes.iterator());
+    protected Object readResolve() {
+	labelSet = Label.parse(labelString);
+	return this;
     }
 
-    public String getPortsAsString() {
-	return isEmpty(recipes) ? "" : Joiner.on(" ").join(ports.iterator());
+    public String getCookbookString() {
+	return cookbookString;
+    }
+
+    public String getPortString() {
+	return portString;
     }
 
     @Override
@@ -114,21 +136,12 @@ public class ChefBuilder extends JCloudsEnabledBuilder<ChefBuilder> {
 	return (DescriptorImpl) super.getDescriptor();
     }
 
-    /**
-     * Filters out non-integer values from iterable of @param strings
-     *
-     * This method skips the not convertable values and nulls
-     *
-     * @return Iterable of Integer representations of @param strings
-     *
-     */
-    public static Iterable<Integer> filterIntegers(Iterable<String> strings) {
-	return filter(transform(strings, new Function<String, Integer>() {
-	    @Override
-	    public Integer apply(String input) {
-		return nullToEmpty(input).trim().matches("\\d+") ? Integer.parseInt(input.trim()) : null;
-	    }
+    public String getLabelString() {
+	return labelString;
+    }
 
-	}), Predicates.notNull());
+
+    public Set<LabelAtom> getLabelSet() {
+	return labelSet;
     }
 }

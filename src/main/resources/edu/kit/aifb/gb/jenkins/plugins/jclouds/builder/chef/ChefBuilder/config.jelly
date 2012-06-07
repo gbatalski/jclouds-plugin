@@ -5,14 +5,20 @@
     See global.jelly for a general discussion about jelly script.
   -->
 
-  <f:entry title="Recipes" field="recipesAsString">
+  <f:entry title="Cookbooks (optional or github)" field="cookbookString">
     <f:textbox />
   </f:entry>
+
+  <f:entry title="Labels to run on" field="labelString">
+    <f:textbox />
+  </f:entry>
+
+
   <f:advanced>
-    <f:entry title="Json Configuration" field="chefJson">
+    <f:entry title="JSON Configuration" field="chefJson">
         <f:textarea />
     </f:entry>
-    <f:entry title="Block until node listening on ports" field="portsAsString">
+    <f:entry title="Block until node listening on ports" field="portString">
         <f:textbox/>
     </f:entry>
   </f:advanced>

@@ -102,7 +102,27 @@ public class ChefRecipeExecutorFunctionTest {
 
     @Test
     public void testInteger() {
-	Iterable<Integer> numbers = ChefBuilder.filterIntegers(Splitter.onPattern("\\s|,|;").split("1 2 3 , test2 ; test 12"));
+	Iterable<Integer> numbers = FilterIntegers.filterIntegers(Splitter.onPattern("\\s|,|;").split("1 2 3 , test2 ; test 12"));
 	assertTrue(copyOf(numbers).size() == 4);
+    }
+
+    @Test
+    public void mapOps() {
+	ImmutableMultimap.Builder<String, String> labeledIps = ImmutableMultimap.<String, String> builder();
+	labeledIps.put("a", "10");
+	labeledIps.put("a", "20");
+	labeledIps.put("b", "10");
+	labeledIps.put("b", "20");
+
+	Map<String, String> m = Maps.transformValues(labeledIps.build().asMap(), new Function<Iterable<String>, String>() {
+
+	    @Override
+	    public String apply(Iterable<String> input) {
+
+		return Joiner.on(",").join(input);
+	    }
+
+	});
+	assertNotNull(m);
     }
 }
