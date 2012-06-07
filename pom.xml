@@ -117,6 +117,23 @@
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-loadbalancer</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds.labs</groupId>
+            <artifactId>elb</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>
+        
+          <dependency>
+            <groupId>org.jclouds.labs</groupId>
+            <artifactId>aws-elb</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>
+        
+        <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>${jsch.version}</version>

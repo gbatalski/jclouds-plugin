@@ -5,6 +5,8 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.lang.String.format;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+import static com.google.common.collect.ImmutableList.*;
+import static com.google.common.primitives.Ints.*;
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.Util;
@@ -12,6 +14,7 @@ import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Label;
+
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
@@ -20,6 +23,7 @@ import hudson.util.ListBoxModel;
 import java.io.File;
 import java.io.IOException;
 
+
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -27,6 +31,7 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
+
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.Hardware;
@@ -45,13 +50,18 @@ import org.kohsuke.stapler.QueryParameter;
 
 
 import com.google.common.base.Charsets;
+
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+
 import com.google.common.io.Files;
 
+
+import static edu.kit.aifb.gb.utils.FilterIntegers.*;
 
 /**
  * @author Vijay Kiran

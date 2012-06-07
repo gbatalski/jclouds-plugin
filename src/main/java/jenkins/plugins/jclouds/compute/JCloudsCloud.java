@@ -12,8 +12,8 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
+import hudson.util.ListBoxModel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -42,6 +42,8 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.loadbalancer.LoadBalancerService;
+import org.jclouds.loadbalancer.LoadBalancerServiceContext;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
@@ -54,9 +56,9 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.io.Closeables;
 import com.google.inject.Module;
 
@@ -72,16 +74,19 @@ public class JCloudsCloud extends Cloud {
    public final String identity;
    public final String credential;
    public final String providerName;
+    public final String loadbalancer;
 
    public final String privateKey;
    public final String publicKey;
    public final String endPointUrl;
    public final String profile;
     private final int retentionTime;
+
    public int instanceCap;
    public final List<JCloudsSlaveTemplate> templates;
    public final int scriptTimeout;
    private transient ComputeService compute;
+    private transient LoadBalancerService lb;
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
@@ -109,7 +114,8 @@ public class JCloudsCloud extends Cloud {
                         final int instanceCap,
                         final int retentionTime,
                         final int scriptTimeout,
-                        final List<JCloudsSlaveTemplate> templates) {
+                        final List<JCloudsSlaveTemplate> templates,
+                        final String loadbalancer) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
         this.providerName = Util.fixEmptyAndTrim(providerName);
@@ -122,6 +128,7 @@ public class JCloudsCloud extends Cloud {
         this.retentionTime = retentionTime;
         this.scriptTimeout = scriptTimeout;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
+	this.loadbalancer = loadbalancer;
         readResolve();
     }
 
@@ -144,23 +151,24 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-  
+
     static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new SshjSshClientModule(),
          new JDKLoggingModule() {
             @Override
             public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
                return new ComputeLogger.Factory();
             }
-         }, new EnterpriseConfigurationModule());
+    }, new EnterpriseConfigurationModule());
 
     static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl) {
         Properties overrides = new Properties();
         if (!Strings.isNullOrEmpty(endPointUrl)) {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
         }
+
         return ctx(providerName, identity, credential, overrides);
     }
-        
+
    static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
       // correct the classloader so that extensions can be found
       Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
@@ -170,7 +178,16 @@ public class JCloudsCloud extends Cloud {
                                   .modules(MODULES)
                                   .buildView(ComputeServiceContext.class);
    }
-   
+
+    static LoadBalancerServiceContext lbCtx(String loadbalancer, String identity, String credential, Properties overrides) {
+	// correct the classloader so that extensions can be found
+	Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+	return ContextBuilder.newBuilder(loadbalancer).credentials(identity, credential)
+.modules(MODULES).overrides(overrides)
+		.buildView(LoadBalancerServiceContext.class);
+
+    }
+
    public ComputeService getCompute() {
       if (this.compute == null) {
          Properties overrides = new Properties();
@@ -178,13 +195,27 @@ public class JCloudsCloud extends Cloud {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
          }
          overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
-        		 String.valueOf(scriptTimeout)); 
+        		 String.valueOf(scriptTimeout));
 
          this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
       }
       return compute;
    }
 
+    public LoadBalancerService getLb() {
+	if (this.lb == null) {
+	    Properties overrides = new Properties();
+	    // if (!Strings.isNullOrEmpty(this.endPointUrl)) {
+	    // overrides.setProperty(Constants.PROPERTY_ENDPOINT,
+	    // this.endPointUrl);
+	    // }
+	    // overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
+	    // String.valueOf(scriptTimeout));
+
+	    this.lb = lbCtx(this.loadbalancer, this.identity, this.credential, overrides).getLoadBalancerService();
+	}
+	return lb;
+    }
 
    public List<JCloudsSlaveTemplate> getTemplates() {
       return Collections.unmodifiableList(templates);
@@ -196,17 +227,17 @@ public class JCloudsCloud extends Cloud {
     @Override
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         final JCloudsSlaveTemplate t = getTemplate(label);
-        
+
         List<PlannedNode> r = new ArrayList<PlannedNode>();
         for( ; excessWorkload>0; excessWorkload-- ) {
             if(getRunningNodesCount()>=instanceCap)
                 break;      // maxed out
-            
+
             r.add(new PlannedNode(t.name,
                                   Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                                           public Node call() throws Exception {
                                               // TODO: record the output somewhere
-                                              JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out));
+		    JCloudsSlave s = t.provisionSlave(StreamTaskListener.fromStdout());
                                               Hudson.getInstance().addNode(s);
                                               // Cloud instances may have a long init script. If we declare
                                               // the provisioning complete by returning without the connect
@@ -301,9 +332,9 @@ public class JCloudsCloud extends Cloud {
         }
         return nodeCount;
     }
-        
 
-    
+
+
    @Extension
    public static class DescriptorImpl extends Descriptor<Cloud> {
 
@@ -393,14 +424,14 @@ public class JCloudsCloud extends Cloud {
           builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers
                                              .idFunction()));
           Iterable<String> supportedProviders = ImmutableSortedSet.copyOf(builder.build());
-          
+
           for (String supportedProvider : supportedProviders) {
               m.add(supportedProvider, supportedProvider);
           }
           return m;
       }
 
-      
+
       public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
          // correct the classloader so that extensions can be found
          Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
@@ -451,7 +482,7 @@ public class JCloudsCloud extends Cloud {
       public FormValidation doCheckScriptTimeout(@QueryParameter String value) {
     	  return FormValidation.validatePositiveInteger(value);
       }
-    
+
       public FormValidation doCheckEndPointUrl(@QueryParameter String value) {
          if (!value.isEmpty() && !value.startsWith("http")) {
             return FormValidation.error("The endpoint must be an URL");

@@ -1,0 +1,26 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <!--
+    This jelly script is used for per-project configuration.
+
+    See global.jelly for a general discussion about jelly script.
+  -->
+   
+
+  <f:entry title="Name of Load balancer" field="loadBalancerName">
+    <f:textbox />
+  </f:entry>
+
+  <f:entry title="Labels to compose of" field="labelString">
+      <f:textbox />
+  </f:entry>
+  <f:entry title="Lb Port (extern)" field="loadBalancerPort">
+      <f:textbox />
+   </f:entry>
+   <f:entry title="Instance Port (intern)" field="instancePort">
+       <f:textbox/>
+   </f:entry>
+   <f:entry title="Protocol (HTTP,TCP)" field="protocol">
+       <f:textbox/>
+   </f:entry>
+  
+</j:jelly>

@@ -20,27 +20,27 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
       fixture = new ComputeTestFixture();
       fixture.setUp();
       generatedKeys = SshKeys.generate();
-      
+
       // TODO: this may need to vary per test
       cloud = new JCloudsCloud(
-               fixture.getProvider() + "-profile", 
-               fixture.getProvider(), 
+               fixture.getProvider() + "-profile",
+               fixture.getProvider(),
                fixture.getIdentity(),
-               fixture.getCredential(), 
-               generatedKeys.get("private"), 
-               generatedKeys.get("public"), 
-               fixture.getEndpoint(), 
-               1, 
+               fixture.getCredential(),
+               generatedKeys.get("private"),
+               generatedKeys.get("public"),
+               fixture.getEndpoint(),
+               1,
                30,
                600*1000,
-               Collections.<JCloudsSlaveTemplate> emptyList());
+ Collections.<JCloudsSlaveTemplate> emptyList(), "elb");
    }
 
    public void testDoTestConnectionCorrectCredentialsEtc() {
       FormValidation result = new JCloudsCloud.DescriptorImpl().doTestConnection(
                                     fixture.getProvider(),
                                     fixture.getIdentity(),
-                                    fixture.getCredential(), 
+                                    fixture.getCredential(),
                                     generatedKeys.get("private"),
                                     fixture.getEndpoint());
       assertEquals("Connection succeeded!", result.getMessage());

@@ -29,7 +29,12 @@
     <f:entry title="Credential" field="credential">
         <f:textbox/>
     </f:entry>
-
+    
+    <f:entry title="Load Balancer Provider" field="loadbalancer">
+        <!-- <f:select/> -->
+        <f:textbox/>
+    </f:entry>
+    
     <f:entry title="RSA Private Key" field="privateKey">
         <f:textarea/>
     </f:entry>
@@ -42,6 +47,8 @@
             <st:include page="config.jelly" class="${descriptor.clazz}"/>
         </f:repeatable>
     </f:entry>
+    
+  
 
     <f:validateButton title="${%Generate Key Pair}" progress="${%Generate...}" method="generateKeyPair"
                       with="identity,credential"/>

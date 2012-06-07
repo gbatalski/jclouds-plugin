@@ -31,11 +31,11 @@ public class JCloudsSlave extends Slave {
     public final boolean stopOnTerminate;
     private String cloudName;
     private String nodeId;
-    
+
     // #4 persist credentials
-	private String user;
-	private String privateKey;
-    
+    private String user;
+    private String privateKey;
+
    @DataBoundConstructor
    public JCloudsSlave(String cloudName,
                        String name,
@@ -85,8 +85,8 @@ public class JCloudsSlave extends Slave {
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
         // #4 persist credentials
-		this.user = metadata.getCredentials().getUser();
-		this.privateKey = metadata.getCredentials().getPrivateKey();
+	this.user = metadata.getCredentials().getUser();
+	this.privateKey = metadata.getCredentials().getPrivateKey();
     }
 
    /**
@@ -123,7 +123,7 @@ public class JCloudsSlave extends Slave {
     public String getCloudName() {
         return cloudName;
     }
-    
+
    /**
     * {@inheritDoc}
     */

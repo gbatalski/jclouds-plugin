@@ -67,9 +67,18 @@ public class ChefBuilder extends JCloudsEnabledBuilder<ChefBuilder> {
     }
 
     @Override
-    protected void build(ListeningExecutorService listeningDecorator, Iterable<RunningNode> runningNodes, Logger logger) {
-	Function<RunningNode, Boolean> chefExecFunction = new ChefRecipeExecutorFunction(recipes, chefJson, logger, toArray(ports,
-		Integer.class));
+    protected void build(JCloudsBuildWrapper jCloudsBuildWrapper, AbstractBuild<?, ?> build, Launcher launcher,
+	    BuildListener listener,
+	    ListeningExecutorService listeningDecorator,
+ Iterable<RunningNode> runningNodes, Logger logger) throws IOException,
+	    InterruptedException {
+	for (Environment env : build.getEnvironments())
+	    env.buildEnvVars(build.getEnvironment(listener));
+
+
+	Function<RunningNode, Boolean> chefExecFunction = new ChefRecipeExecutorFunction(cookbooks, Util.replaceMacro(chefJson,
+		build.getEnvironment(listener)), logger, labelSet,
+		toArray(listeningPorts, Integer.class));
 	SimpleParallelExecutor<Boolean> executor = new SimpleParallelExecutor<Boolean>(listeningDecorator, logger, chefExecFunction);
 	executor.apply(runningNodes);
     }

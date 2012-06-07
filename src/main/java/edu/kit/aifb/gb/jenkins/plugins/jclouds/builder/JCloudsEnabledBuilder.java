@@ -25,6 +25,7 @@ import jenkins.plugins.jclouds.internal.BuildListenerLogger;
 import org.jclouds.logging.Logger;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -57,8 +58,10 @@ public abstract class JCloudsEnabledBuilder<T> extends Builder {
 	    } else {
 		runningNodes = jCloudsBuildWrapper.getRunningNodes();
 	    }
-	    if (runningNodes.iterator().hasNext()) {
-		build(MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), runningNodes, logger);
+	    if (!Iterables.isEmpty(runningNodes)) {
+		build(jCloudsBuildWrapper, build, launcher, listener,
+			MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), runningNodes,
+			logger);
 	    }
 	}
 
@@ -66,10 +69,20 @@ public abstract class JCloudsEnabledBuilder<T> extends Builder {
     }
 
     /**
+     *
+     * @param jCloudsBuildWrapper
+     * @param build
+     * @param launcher
+     * @param listener
      * @param listeningDecorator
      * @param runningNodes
      * @param logger
+     * @throws IOException
+     * @throws InterruptedException
      */
-    protected abstract void build(ListeningExecutorService listeningDecorator, Iterable<RunningNode> runningNodes, Logger logger);
+    protected abstract void build(JCloudsBuildWrapper jCloudsBuildWrapper, AbstractBuild<?, ?> build, Launcher launcher,
+	    BuildListener listener,
+	    ListeningExecutorService listeningDecorator, Iterable<RunningNode> runningNodes, Logger logger) throws IOException,
+	    InterruptedException;
 
 }
