@@ -103,8 +103,11 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 		throw new RuntimeException(response.getError());
 	    if (!isEmpty(portsToCheck))
 		for (Integer port : portsToCheck) {
+		    // wait up to 20 minutes start polling from each 10 seconds
+		    // and up to
+		    // default 100 seconds per try
 		    boolean listeningOnPort = new RetryablePredicate<Integer>(new ListeningOnPort(nodeMetadata,
-			    runningNode.getCloudName()), 120, 5, TimeUnit.SECONDS).apply(port);
+			    runningNode.getCloudName()), 1200, 30, 100, TimeUnit.SECONDS).apply(port);
 		    if (!listeningOnPort)
 			throw new RuntimeException(format("Not listening on port %d after default back-off", port));
 		}
