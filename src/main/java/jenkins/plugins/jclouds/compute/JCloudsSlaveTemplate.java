@@ -194,6 +194,20 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        }
    }
 
+    public JCloudsSlave provisionSlave(NodeMetadata nodeMetadata, TaskListener listener, boolean addNodeToJenkins)
+	    throws IOException {
+	try {
+	    JCloudsSlave slave = new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
+		    numExecutors,
+		    stopOnTerminate);
+	    Jenkins.getInstance().addNode(slave);
+	    return slave;
+
+	} catch (Descriptor.FormException e) {
+	    throw new AssertionError("Invalid configuration " + e.getMessage());
+	}
+    }
+
    public NodeMetadata get() {
       LOGGER.info("Provisioning new jclouds node");
 
