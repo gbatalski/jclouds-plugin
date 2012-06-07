@@ -9,14 +9,21 @@ import static com.google.common.collect.ImmutableList.of;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Map;
+
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.junit.Test;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Maps;
 
 
-import edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList;
+import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList;
+import edu.kit.aifb.gb.utils.FilterIntegers;
 
 /**
  * @author gena
@@ -26,7 +33,7 @@ import edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList;
 public class ChefRecipeExecutorFunctionTest {
 
     /**
-     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList#RunList(java.lang.Iterable)}.
+     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList#RunList(java.lang.Iterable)}.
      */
     @Test
     public void testRunList() {
@@ -36,7 +43,7 @@ public class ChefRecipeExecutorFunctionTest {
     }
 
     /**
-     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList#toJSON()}.
+     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList#toJSON()}.
      */
     @Test
     public void testToJSON() {
@@ -45,7 +52,7 @@ public class ChefRecipeExecutorFunctionTest {
     }
 
     /**
-     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList#fromJSON(java.lang.String)}.
+     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList#fromJSON(java.lang.String)}.
      */
     @Test
     public void testFromJSON() {
@@ -70,7 +77,7 @@ public class ChefRecipeExecutorFunctionTest {
 
     /**
      * Test method for
-     * {@link edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList#getRecipes()}
+     * {@link edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList#getRecipes()}
      * .
      */
     @Test
@@ -81,7 +88,7 @@ public class ChefRecipeExecutorFunctionTest {
     }
 
     /**
-     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.chef.ChefRecipeExecutorFunction.RunList#getKnifeStatement()}.
+     * Test method for {@link edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList#getKnifeStatement()}.
      */
     @Test
     public void testGetKnifeStatement() {

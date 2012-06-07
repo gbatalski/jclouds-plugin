@@ -1,10 +1,7 @@
 /**
  *
  */
-package edu.kit.aifb.gb.jenkins.plugins.chef;
-
-import static com.google.common.base.Strings.*;
-import static com.google.common.collect.Iterables.*;
+package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef;
 
 import hudson.Extension;
 import hudson.Launcher;

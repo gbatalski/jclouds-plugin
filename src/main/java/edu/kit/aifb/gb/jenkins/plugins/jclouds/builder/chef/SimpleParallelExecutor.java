@@ -1,7 +1,7 @@
 /**
  *
  */
-package edu.kit.aifb.gb.jenkins.plugins.chef;
+package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef;
 
 import java.util.List;
 import java.util.concurrent.Callable;

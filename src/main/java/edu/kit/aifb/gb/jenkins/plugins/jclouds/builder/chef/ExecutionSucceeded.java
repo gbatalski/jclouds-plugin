@@ -1,7 +1,7 @@
 /**
  *
  */
-package edu.kit.aifb.gb.jenkins.plugins.chef;
+package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef;
 
 import org.jclouds.compute.domain.ExecResponse;
 

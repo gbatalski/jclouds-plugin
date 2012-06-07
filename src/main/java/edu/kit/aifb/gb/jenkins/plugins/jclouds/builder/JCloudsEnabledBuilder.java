@@ -1,7 +1,7 @@
 /**
  *
  */
-package edu.kit.aifb.gb.jenkins.plugins.chef;
+package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder;
 
 import hudson.Launcher;
 import hudson.model.BuildListener;

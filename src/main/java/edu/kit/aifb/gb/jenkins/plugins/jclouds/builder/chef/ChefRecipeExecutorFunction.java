@@ -1,7 +1,7 @@
 /**
  *
  */
-package edu.kit.aifb.gb.jenkins.plugins.chef;
+package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef;
 
 import static com.google.common.collect.Collections2.*;
 import static com.google.common.collect.Iterables.*;
