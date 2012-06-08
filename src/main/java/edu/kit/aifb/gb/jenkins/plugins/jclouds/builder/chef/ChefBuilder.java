@@ -43,8 +43,8 @@ import edu.kit.aifb.gb.utils.FilterIntegers;
  */
 public class ChefBuilder extends JCloudsEnabledBuilder<ChefBuilder> {
 
-    private final transient Iterable<String> cookbooks;
-    private final transient Iterable<Integer> listeningPorts;
+    private transient Iterable<String> cookbooks;
+    private transient Iterable<Integer> listeningPorts;
     private final String portString;
     private final String labelString;
     private final String cookbookString;
@@ -59,13 +59,14 @@ public class ChefBuilder extends JCloudsEnabledBuilder<ChefBuilder> {
 	this.portString = portString;
 	this.labelString = labelString;
 	this.cookbookString = cookbookString;
-	this.cookbooks = cookbookString == null ? ImmutableSet.<String> of() : Splitter.onPattern("\\s|,|;").split(cookbookString);
-	this.listeningPorts = FilterIntegers.filterIntegers(portString);
+
 	readResolve();
     }
 
     protected Object readResolve() {
 	labelSet = Label.parse(labelString);
+	listeningPorts = FilterIntegers.filterIntegers(portString);
+	cookbooks = cookbookString == null ? ImmutableSet.<String> of() : Splitter.onPattern("\\s|,|;").split(cookbookString);
 	return this;
     }
 
