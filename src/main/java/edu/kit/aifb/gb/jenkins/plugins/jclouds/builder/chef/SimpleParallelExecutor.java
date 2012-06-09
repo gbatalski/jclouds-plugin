@@ -4,6 +4,7 @@
 package edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,18 +25,19 @@ import com.google.common.util.concurrent.ListeningExecutorService;
  *
  */
 public class SimpleParallelExecutor<T> implements Function<Iterable<RunningNode>, Iterable<T>> {
-    private final Function<RunningNode, T> delegate;
+    private final Supplier<Map<RunningNode, Function<RunningNode, T>>> delegateSupplier;
     private final ListeningExecutorService executor;
     private final Logger logger;
     private final long maxAttempts;
 
-    public SimpleParallelExecutor(ListeningExecutorService executor, Logger logger, Function<RunningNode, T> delegate) {
-	this(executor, logger, delegate, 1l);
+    public SimpleParallelExecutor(ListeningExecutorService executor, Logger logger,
+	    Supplier<Map<RunningNode, Function<RunningNode, T>>> delegateSupplier) {
+	this(executor, logger, 1l, delegateSupplier);
     }
 
-    public SimpleParallelExecutor(ListeningExecutorService executor, Logger logger, Function<RunningNode, T> delegate,
-	    long maxAttempts) {
-	this.delegate = delegate;
+    public SimpleParallelExecutor(ListeningExecutorService executor, Logger logger, long maxAttempts,
+	    Supplier<Map<RunningNode, Function<RunningNode, T>>> delegateSupplier) {
+	this.delegateSupplier = delegateSupplier;
 	this.executor = executor;
 	this.logger = logger;
 	this.maxAttempts = maxAttempts;
@@ -48,6 +50,7 @@ public class SimpleParallelExecutor<T> implements Function<Iterable<RunningNode>
 	final ImmutableList.Builder<ListenableFuture<T>> nodeLinstenerBuilder = ImmutableList.<ListenableFuture<T>> builder();
 
 	final AtomicInteger failedLaunches = new AtomicInteger();
+	final Map<RunningNode, Function<RunningNode, T>> delegates = delegateSupplier.get();
 
 	for (final RunningNode runningNode : runningNodes) {
 
@@ -55,7 +58,7 @@ public class SimpleParallelExecutor<T> implements Function<Iterable<RunningNode>
 
 		@Override
 		public T get() {
-		    return delegate.apply(runningNode);
+		    return delegates.get(runningNode).apply(runningNode);
 		}
 
 	    }, maxAttempts));

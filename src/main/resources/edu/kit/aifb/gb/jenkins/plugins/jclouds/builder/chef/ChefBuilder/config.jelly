@@ -12,7 +12,10 @@
   <f:entry title="Labels to run on" field="labelString">
     <f:textbox />
   </f:entry>
-
+    
+  <f:entry title="Execution Strategy" field="executionStrategy">
+    <f:select />
+  </f:entry>
 
   <f:advanced>
     <f:entry title="JSON Configuration" field="chefJson">

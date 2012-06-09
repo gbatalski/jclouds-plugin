@@ -10,6 +10,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
+import java.util.Set;
+
+import nl.javadude.scannit.Configuration;
+import nl.javadude.scannit.Scannit;
+import nl.javadude.scannit.scanner.TypeAnnotationScanner;
 
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.junit.Test;
@@ -23,6 +28,7 @@ import com.google.common.collect.Maps;
 
 
 import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList;
+import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.execution.Strategy;
 import edu.kit.aifb.gb.utils.FilterIntegers;
 
 /**
@@ -124,5 +130,16 @@ public class ChefRecipeExecutorFunctionTest {
 
 	});
 	assertNotNull(m);
+    }
+
+    @Test
+    public void testScanit() {
+	Set<Class<?>> strategyClazzes;
+
+	Configuration config = Configuration.config().with(new TypeAnnotationScanner())
+		.scan("edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.execution");
+	Scannit scannit = new Scannit(config);
+	strategyClazzes = scannit.getTypesAnnotatedWith(Strategy.class);
+
     }
 }

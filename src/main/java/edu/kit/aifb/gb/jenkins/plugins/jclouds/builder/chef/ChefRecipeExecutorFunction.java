@@ -30,7 +30,7 @@ import com.google.common.base.Predicate;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -67,10 +67,6 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
     public Boolean apply(RunningNode runningNode) {
 	boolean successful = false;
 	try {
-
-	    if (!labelsToRunOn.isEmpty() && Sets.intersection(labelsToRunOn, runningNode.getLabelSet()).isEmpty())
-		return true;
-
 	    final NodeMetadata nodeMetadata = runningNode.getNode();
 	    final JCloudsSlaveTemplate slaveTemplate = JCloudsCloud.getByName(runningNode.getCloudName()).getTemplate(
 		    nodeMetadata.getName());
