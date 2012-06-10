@@ -28,6 +28,8 @@ import com.google.common.collect.Maps;
 
 
 import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.ChefRecipeExecutorFunction.RunList;
+import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.execution.CassandraChefExecutorStrategy;
+import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.execution.CassandraExecutorSupplier;
 import edu.kit.aifb.gb.jenkins.plugins.jclouds.builder.chef.execution.Strategy;
 import edu.kit.aifb.gb.utils.FilterIntegers;
 
@@ -141,5 +143,10 @@ public class ChefRecipeExecutorFunctionTest {
 	Scannit scannit = new Scannit(config);
 	strategyClazzes = scannit.getTypesAnnotatedWith(Strategy.class);
 
+    }
+
+    @Test
+    public void testTokenCreation() {
+	System.out.println(Joiner.on("\n").join(CassandraExecutorSupplier.calcTokens(3)));
     }
 }

@@ -7,6 +7,7 @@ import hudson.Util;
 import hudson.model.labels.LabelAtom;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,11 +101,12 @@ public class CassandraExecutorSupplier extends ExecutorSupplier<CassandraNode> {
 	return suppliers;
     }
 
-    private String[] calcTokens(long size) {
+    public static String[] calcTokens(long size) {
 	BigDecimal RING_SIZE = BigDecimal.valueOf(2).pow(127);
 	ImmutableList.Builder<String> tokens = ImmutableList.<String> builder();
 	for (int i = 0; i < size; i++)
-	    tokens.add(RING_SIZE.divide(BigDecimal.valueOf(size)).multiply(BigDecimal.valueOf(i)).toPlainString());
+	    tokens.add(RING_SIZE.divide(BigDecimal.valueOf(size), RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(i))
+		    .toPlainString());
 
 	return Iterables.toArray(tokens.build(), String.class);
     }
