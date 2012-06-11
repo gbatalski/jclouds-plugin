@@ -58,11 +58,26 @@ public class CreateLoadbalancerAndDestroyOnError implements Function<Iterable<No
 	    @Override
 	    public LoadBalancerMetadata call() throws Exception {
 
-		return JCloudsCloud
+		LoadBalancerMetadata lbMetadata = JCloudsCloud
 			.getByName(loadBalancer.cloudName)
 			.getLb()
 			.createLoadBalancerInLocation(null, loadBalancer.loadBalancerName, loadBalancer.protocol,
 				loadBalancer.loadBalancerPort, loadBalancer.instancePort, input);
+		if (loadBalancer.sticky == true) {
+		    // create sticky cookie policy
+		    JCloudsCloud
+			    .getByName(loadBalancer.cloudName)
+			    .getLb()
+			    .createAppCookieStickinessPolicy(null, lbMetadata.getId(), loadBalancer.cookieName,
+				    loadBalancer.cookieName);
+		    // enable sticky cookie policy
+		    JCloudsCloud
+			    .getByName(loadBalancer.cloudName)
+			    .getLb()
+			    .setLoadBalancingPoliciesOfListener(null, lbMetadata.getId(), loadBalancer.loadBalancerPort,
+				    loadBalancer.cookieName);
+		}
+		return lbMetadata;
 	    }
 	});
 

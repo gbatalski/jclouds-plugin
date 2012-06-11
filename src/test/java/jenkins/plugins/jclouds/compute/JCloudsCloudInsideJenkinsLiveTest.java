@@ -10,9 +10,9 @@ import org.jvnet.hudson.test.HudsonTestCase;
 
 public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
 
-   private ComputeTestFixture fixture;
-   private JCloudsCloud cloud;
-   private Map<String, String> generatedKeys;
+    ComputeTestFixture fixture;
+    JCloudsCloud cloud;
+    Map<String, String> generatedKeys;
 
    @Override
    public void setUp() throws Exception {

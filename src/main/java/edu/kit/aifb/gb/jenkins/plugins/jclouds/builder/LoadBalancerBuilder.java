@@ -26,8 +26,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
 
@@ -44,13 +46,16 @@ public class LoadBalancerBuilder extends JCloudsEnabledBuilder<LoadBalancerBuild
     private transient Set<LabelAtom> labelSet;
 
     @DataBoundConstructor
-    public LoadBalancerBuilder(String loadBalancerName, String labelString, int loadBalancerPort, int instancePort, String protocol) {
+    public LoadBalancerBuilder(String loadBalancerName, String labelString, int loadBalancerPort, int instancePort,
+	    String protocol, boolean sticky, String cookieName) {
 	super();
 	this.loadBalancerName = loadBalancerName;
 	this.labelString = labelString;
 	this.loadBalancerPort = loadBalancerPort;
 	this.instancePort = instancePort;
 	this.protocol = protocol;
+	this.sticky = sticky;
+	this.cookieName = Objects.firstNonNull(Strings.emptyToNull(cookieName), "JSESSIONID");
 	readResolve();
     }
 
@@ -59,6 +64,8 @@ public class LoadBalancerBuilder extends JCloudsEnabledBuilder<LoadBalancerBuild
     private final int loadBalancerPort;
     private final int instancePort;
     private final String protocol;
+    private final boolean sticky;
+    private final String cookieName;
 
     private LoadBalancerMetadata loadbalancer;
 
@@ -126,7 +133,7 @@ public class LoadBalancerBuilder extends JCloudsEnabledBuilder<LoadBalancerBuild
 	});
 
 	loadbalancer = new CreateLoadbalancerAndDestroyOnError(new LoadBalancer(cloudName, loadBalancerName, protocol,
-		loadBalancerPort, instancePort), listeningDecorator, logger).apply(labeledNodes);
+		loadBalancerPort, instancePort, sticky, cookieName), listeningDecorator, logger).apply(labeledNodes);
 	build.getEnvironment(listener).put(loadBalancerName + "_IPS", Joiner.on(", ").join(loadbalancer.getAddresses()));
 	jCloudsBuildWrapper.addLoadbalancer(loadbalancer);
 
@@ -161,6 +168,14 @@ public class LoadBalancerBuilder extends JCloudsEnabledBuilder<LoadBalancerBuild
     public Descriptor<Builder> getDescriptor() {
 
 	return (DescriptorImpl) super.getDescriptor();
+    }
+
+    public boolean isSticky() {
+	return sticky;
+    }
+
+    public String getCookieName() {
+	return cookieName;
     }
 
 }

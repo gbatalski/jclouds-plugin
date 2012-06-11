@@ -22,5 +22,12 @@
    <f:entry title="Protocol (HTTP,TCP)" field="protocol">
        <f:textbox/>
    </f:entry>
+   <f:entry title="Sticky" field="sticky">
+       <f:checkbox/>
+   </f:entry>
+   <f:entry title="Cookie Name" field="cookieName">
+       <f:textbox/>
+   </f:entry>
+
   
 </j:jelly>
