@@ -51,6 +51,8 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.google.common.base.Charsets;
 
+import com.google.common.base.Joiner;
+
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -194,10 +196,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        }
    }
 
-    public JCloudsSlave provisionSlave(NodeMetadata nodeMetadata, TaskListener listener, boolean addNodeToJenkins)
+    public JCloudsSlave provisionSlave(NodeMetadata nodeMetadata, TaskListener listener, boolean addNodeToJenkins, String... labels)
 	    throws IOException {
 	try {
-	    JCloudsSlave slave = new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
+
+	    JCloudsSlave slave = new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString
+		    + (labels != null ? " " + Joiner.on(" ").join(labels) : ""), description,
 		    numExecutors,
 		    stopOnTerminate);
 	    Jenkins.getInstance().addNode(slave);

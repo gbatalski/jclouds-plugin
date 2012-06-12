@@ -52,7 +52,8 @@ public abstract class JCloudsEnabledBuilder<T> extends Builder {
 		if (node instanceof JCloudsSlave) {
 		    JCloudsSlave jcloudsSlave = (JCloudsSlave) node;
 		    runningNodes = ImmutableList.<RunningNode> of(new RunningNode(jcloudsSlave.getCloudName(), jcloudsSlave
-			    .getNodeMetaData().getName(), false, jcloudsSlave.getNodeMetaData(), jcloudsSlave.getAssignedLabels()));
+			    .getNodeMetaData().getName(), false, jcloudsSlave.getNodeMetaData(), jcloudsSlave.getAssignedLabels(),
+			    false, false));
 		}
 
 	    } else {

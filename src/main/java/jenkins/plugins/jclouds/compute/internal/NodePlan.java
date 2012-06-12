@@ -13,17 +13,21 @@ public class NodePlan {
    private final String templateName;
    private final int count;
    private final boolean suspendOrTerminate;
+   private final boolean registerAsSlave;
+   private final boolean keepAlive;
    private final Supplier<NodeMetadata> nodeSupplier;
-    private final Set<LabelAtom> labelSet;
+   private final Set<LabelAtom> labelSet;
 
    public NodePlan(String cloud, String template, int count, boolean suspendOrTerminate,
-            Supplier<NodeMetadata> nodeSupplier,Set<LabelAtom> labelSet) {
+            Supplier<NodeMetadata> nodeSupplier,Set<LabelAtom> labelSet,boolean registerAsSlave, boolean keepAlive) {
       this.cloudName = cloud;
       this.templateName = template;
       this.count = count;
       this.suspendOrTerminate = suspendOrTerminate;
       this.nodeSupplier = nodeSupplier;
-	this.labelSet = labelSet;
+      this.labelSet = labelSet;
+      this.registerAsSlave = registerAsSlave;
+	this.keepAlive = keepAlive;
    }
 
    public String getCloudName() {
@@ -48,5 +52,13 @@ public class NodePlan {
 
     public Set<LabelAtom> getLabelSet() {
 	return labelSet;
+    }
+
+    public boolean isRegisterAsSlave() {
+	return registerAsSlave;
+    }
+
+    public boolean isKeepAlive() {
+	return keepAlive;
     }
 }

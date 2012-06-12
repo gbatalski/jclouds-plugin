@@ -1,6 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import java.io.Serializable;
 import java.util.Set;
 
 import hudson.Extension;
@@ -12,7 +11,6 @@ import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
@@ -23,17 +21,23 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
     public final String templateName;
     public final int count;
     public final boolean suspendOrTerminate;
+    public final boolean registerAsSlave; // available as jenkins slave (with
+					  // default retention policy)
+    public final boolean keepAlive; // do not destroy after build
     public final String labelString;
 
     private transient Set<LabelAtom> labelSet;
 
     @DataBoundConstructor
-    public InstancesToRun(String cloudName, String templateName, int count, boolean suspendOrTerminate, String labelString) {
+    public InstancesToRun(String cloudName, String templateName, int count, boolean suspendOrTerminate, String labelString,
+	    boolean registerAsSlave, boolean keepAlive) {
         this.cloudName = Util.fixEmptyAndTrim(cloudName);
         this.templateName = Util.fixEmptyAndTrim(templateName);
         this.count = count;
         this.suspendOrTerminate = suspendOrTerminate;
 	this.labelString = labelString;
+	this.keepAlive = keepAlive;
+	this.registerAsSlave = registerAsSlave;
 	readResolve();
     }
 

@@ -1,12 +1,15 @@
 package jenkins.plugins.jclouds.compute;
 
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
 import hudson.model.Computer;
+import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
 import hudson.tasks.BuildWrapper;
@@ -14,12 +17,8 @@ import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.internal.NodePlan;
@@ -30,28 +29,24 @@ import jenkins.plugins.jclouds.internal.BuildListenerLogger;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.concurrent.Futures.ListenableFutureAdapter;
 import org.jclouds.loadbalancer.domain.LoadBalancerMetadata;
 import org.jclouds.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimaps;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
 public class JCloudsBuildWrapper extends BuildWrapper {
@@ -103,7 +98,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 		// take the hit here, as opposed to later
 		computeCache.getUnchecked(cloudName);
 		return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier, instance
-			.getLabelSet());
+			.getLabelSet(), instance.registerAsSlave, instance.keepAlive);
 	    }
 
 	});
@@ -119,19 +114,37 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 	// #2 Expose running nodes for later
 	runningNode = provisioner.apply(nodePlans);
 
-
 	// Starting jenkins slaves to control the nodes
-	for (RunningNode node : runningNode) {
-	    try {
+	ImmutableList.copyOf(
+	transform(filter(runningNode, new Predicate<RunningNode>() {
 
-		JCloudsCloud.getByName(node.getCloudName()).getTemplate(node.getTemplateName())
-			.provisionSlave(node.getNode(), listener, true);
-
-	    } catch (IOException e) {
-		listener.error(e.getLocalizedMessage());
+	    @Override
+	    public boolean apply(RunningNode input){
+		return input.isRegisterAsSlave();
 	    }
-	}
+	}), new Function<RunningNode, RunningNode>() {
 
+	    @Override
+	    public RunningNode apply(RunningNode input) {
+		try {
+
+		    JCloudsCloud.getByName(input.getCloudName()).getTemplate(input.getTemplateName())
+			    .provisionSlave(input.getNode(), listener, true,
+				    Joiner.on(" ").join(transform(input.getLabelSet(), new Function<Label, String>() {
+
+					@Override
+					public String apply(Label input) {
+
+					    return input.getName();
+					}
+				    })));
+
+		} catch (IOException e) {
+		    listener.error(e.getLocalizedMessage());
+		}
+		return input;
+	    }
+	}));
 
 	return new Environment() {
 	    @Override
@@ -144,17 +157,40 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 
 	    @Override
 	    public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-		terminateNodes.apply(runningNode);
-		for (RunningNode node : runningNode) {
-		    Node n = Jenkins.getInstance().getNode(node.getNode().getName());
-		    if (n != null)
-			Jenkins.getInstance().removeNode(n);
-		    // destroy loadbalancer if any
-		    for (LoadBalancerMetadata lb : loadbalancer) {
-			JCloudsCloud.getByName(node.getCloudName()).getLb().destroyLoadBalancer(lb.getId());
+		// terminate only the nodes which shouldn't be kept alive
+		terminateNodes.apply(filter(runningNode, new Predicate<RunningNode>() {
+
+		    @Override
+		    public boolean apply(RunningNode input) {
+			return !input.isKeepAlive();
 		    }
-		    loadbalancer.clear();
-		}
+		}));
+
+		// removing jenkins slaves if they shouldn't be kept alive
+		Iterable<Void> result = transform(runningNode, new Function<RunningNode, Void>() {
+
+		    @Override
+		    public Void apply(RunningNode input) {
+			if (!input.isKeepAlive()) {
+			    Node n = Jenkins.getInstance().getNode(input.getNode().getName());
+			    if (n != null)
+				try {
+				    Jenkins.getInstance().removeNode(n);
+				} catch (IOException e) {
+
+				    listener.error(e.getLocalizedMessage());
+				}
+			}
+			// destroy load balancer if any in all clouds
+			for (LoadBalancerMetadata lb : loadbalancer) {
+			    JCloudsCloud.getByName(input.getCloudName()).getLb().destroyLoadBalancer(lb.getId());
+			}
+
+			return null;
+		    }
+		});
+
+		loadbalancer.clear();
 
 		return true;
 
