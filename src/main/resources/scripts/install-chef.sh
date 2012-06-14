@@ -26,9 +26,9 @@ if [ ! "$chef_binary" ] ; then
     SOLO_DIR=$HOME_DIR/chef-solo
     
     mkdir $SOLO_DIR
-    chown $CURRENT_USER $SOLO_DIR
-    chmod 774 $SOLO_DIR
-    chmod +s $SOLO_DIR
+    chown -R $CURRENT_USER $SOLO_DIR
+    chmod -R 774 $SOLO_DIR
+    chmod -R +s $SOLO_DIR
     cd $SOLO_DIR
     
 	# Data bags
@@ -42,8 +42,8 @@ if [ ! "$chef_binary" ] ; then
     cd $SOLO_DIR/orig-cookbooks 
     git init 
     touch .gitignore
-    git config --global user.name "$CURRENT_USER" 
-    git config --global user.email "$CURRENT_USER@localhost"
+    git config --system user.name "$CURRENT_USER" 
+    git config --system user.email "$CURRENT_USER@localhost"
     git add . 
     git commit -am"Download cookbook repository created"
     cd ..
