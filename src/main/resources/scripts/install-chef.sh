@@ -20,6 +20,14 @@ if [ ! "$chef_binary" ] ; then
     apt-get install -f -y -qq --force-yes ruby1.9.1 ruby1.9.1-dev make
     gem1.9.1 install --no-rdoc --no-ri chef --version 0.10.10 # 0.10.10 got problems with python vitualenv
 	gem1.9.1 install --no-rdoc --no-ri knife-github-cookbooks
+	# Install updated version of knife-github-cookbook
+	git clone git://github.com/gbatalski/knife-github-cookbooks.git
+	cd knife-github-cookbooks
+	gem1.9.1 build *.gemspec
+	gem1.9.1 install --no-rdoc --no-ri *.gem
+	cd ..
+	# done !#
+	
     
     HOME_DIR=${HOME_DIR:-"`getent passwd $CURRENT_USER | cut -d: -f6`"}
     
