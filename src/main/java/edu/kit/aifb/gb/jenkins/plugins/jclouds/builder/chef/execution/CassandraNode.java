@@ -14,17 +14,17 @@ import jenkins.plugins.jclouds.compute.internal.RunningNode;
  */
 public class CassandraNode {
 
-	public CassandraNode(String listenAddress, String rpcAddress, String seeds,
- RunningNode delegate, boolean autoBootstrap,
-	    String initialToken) {
-		super();
-		this.listenAddress = listenAddress;
-		this.rpcAddress = rpcAddress;
-		this.seeds = seeds;
-		this.delegate = delegate;
+    public CassandraNode(String listenAddress, String rpcAddress, String seeds, RunningNode delegate, boolean autoBootstrap,
+	    String initialToken, String broadcastAddress) {
+	super();
+	this.listenAddress = listenAddress;
+	this.rpcAddress = rpcAddress;
+	this.seeds = seeds;
+	this.delegate = delegate;
 	this.autoBootstap = autoBootstrap;
 	this.initialToken = initialToken;
-	}
+	this.broadcastAddress = broadcastAddress;
+    }
 
     private final String listenAddress;
     private final String rpcAddress;
@@ -32,6 +32,7 @@ public class CassandraNode {
     private final RunningNode delegate;
     private final boolean autoBootstap;
     private final String initialToken;
+    private final String broadcastAddress;
 
     public String getListenAddress() {
 	return listenAddress;
@@ -56,5 +57,11 @@ public class CassandraNode {
     public String getInitialToken() {
 	return initialToken;
     }
+
+    public String getBroadcastAddress() {
+	return broadcastAddress;
+    }
+
+
 
 }

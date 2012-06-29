@@ -59,45 +59,46 @@ public class CassandraExecutorSupplier extends ExecutorSupplier<CassandraNode> {
      */
     @Override
     public Map<RunningNode, Function<RunningNode, CassandraNode>> get() {
-	if(suppliers==null){
-	ImmutableMap.Builder<RunningNode, Function<RunningNode, CassandraNode>> builder = new ImmutableMap.Builder<RunningNode, Function<RunningNode, CassandraNode>>();
-	List<RunningNode> runningNodeList = ImmutableList.copyOf(runningNodes);
+	if (suppliers == null) {
+	    ImmutableMap.Builder<RunningNode, Function<RunningNode, CassandraNode>> builder = new ImmutableMap.Builder<RunningNode, Function<RunningNode, CassandraNode>>();
+	    List<RunningNode> runningNodeList = ImmutableList.copyOf(runningNodes);
 	    final String seeds = Joiner.on(", ").join(transform(runningNodeList, new Function<RunningNode, String>() {
 
-	    @Override
-	    public String apply(RunningNode input) {
+		@Override
+		public String apply(RunningNode input) {
 
-		return getFirst(input.getNode().getPublicAddresses(), "localhost");
-	    }
-	}));
-	String[] tokens = calcTokens(runningNodeList.size());
+		    return getFirst(input.getNode().getPublicAddresses(), "localhost");
+		}
+	    }));
+	    String[] tokens = calcTokens(runningNodeList.size());
 
-	for (int i = 0; i < runningNodeList.size(); i++) {
-	    final RunningNode runningNode = runningNodeList.get(i);
+	    for (int i = 0; i < runningNodeList.size(); i++) {
+		final RunningNode runningNode = runningNodeList.get(i);
 		final CassandraNode cassandraNode = new CassandraNode(getFirst(runningNode.getNode().getPrivateAddresses(),
 			"localhost"), getFirst(runningNode.getNode().getPrivateAddresses(), "localhost"), seeds, runningNode,
-			i > 0, tokens[i]);
+			i > 0, tokens[i], getFirst(runningNode.getNode().getPublicAddresses(), "localhost"));
 
-		final Map<String, String> environment = ImmutableMap.<String, String> of("SEEDS", cassandraNode.getSeeds(),
-			"INITIAL_TOKEN",
-		    cassandraNode.getInitialToken(), "LISTEN_ADDR", cassandraNode.getListenAddress(), "RPC_ADDR",
-		    cassandraNode.getRpcAddress(), "AUTO_BOOTSTRAP", Boolean.toString(cassandraNode.isAutoBootstap()));
+		final Map<String, String> environment = ImmutableMap.<String, String> builder()
+			.put("SEEDS", cassandraNode.getSeeds()).put("INITIAL_TOKEN", cassandraNode.getInitialToken())
+			.put("LISTEN_ADDR", cassandraNode.getListenAddress()).put("RPC_ADDR", cassandraNode.getRpcAddress())
+			.put("AUTO_BOOTSTRAP", Boolean.toString(cassandraNode.isAutoBootstap()))
+			.put("BROADCAST_ADDR", cassandraNode.getBroadcastAddress()).build();
 
-	    builder.put(runningNode,
+		builder.put(runningNode,
 
-	    new Function<RunningNode, CassandraNode>() {
+		new Function<RunningNode, CassandraNode>() {
 
-		@Override
-		public CassandraNode apply(RunningNode input) {
-		    boolean result = new ChefRecipeExecutorFunction(cookbooks, Util.replaceMacro(chefJson, environment), logger,
-			    labelsToRunOn, toArray(portsToCheck, Integer.class)).apply(input);
-		    return result ? cassandraNode : null;
-		}
+		    @Override
+		    public CassandraNode apply(RunningNode input) {
+			boolean result = new ChefRecipeExecutorFunction(cookbooks, Util.replaceMacro(chefJson, environment),
+				logger, labelsToRunOn, toArray(portsToCheck, Integer.class)).apply(input);
+			return result ? cassandraNode : null;
+		    }
 
-	    });
-	}
+		});
+	    }
 	    suppliers = builder.build();
-    }
+	}
 	return suppliers;
     }
 
