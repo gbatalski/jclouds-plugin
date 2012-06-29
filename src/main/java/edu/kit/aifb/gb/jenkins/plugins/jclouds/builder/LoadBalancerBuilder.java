@@ -31,6 +31,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 
 import static com.google.common.collect.Iterables.*;
@@ -135,6 +136,9 @@ public class LoadBalancerBuilder extends JCloudsEnabledBuilder<LoadBalancerBuild
 	loadbalancer = new CreateLoadbalancerAndDestroyOnError(new LoadBalancer(cloudName, loadBalancerName, protocol,
 		loadBalancerPort, instancePort, sticky, cookieName), listeningDecorator, logger).apply(labeledNodes);
 	build.getEnvironment(listener).put(loadBalancerName + "_IPS", Joiner.on(", ").join(loadbalancer.getAddresses()));
+	String loadBalancerDefaultAddress = Iterables.getFirst(loadbalancer.getAddresses(), null);
+	build.getEnvironment(listener).put(loadBalancerName + "_IP", loadBalancerDefaultAddress);
+	logger.info("Loadbalancer created %s", loadBalancerDefaultAddress);
 	jCloudsBuildWrapper.addLoadbalancer(loadbalancer);
 
     }
