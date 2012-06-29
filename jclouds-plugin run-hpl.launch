@@ -26,6 +26,6 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="${jrebel_args} -Djetty.port=8083 -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000 -XX:MaxPermSize=300m -Xms1g -Xmx2g -Djava.net.preferIPv4Stack=true"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djetty.port=8083 -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000 -XX:MaxPermSize=300m -Xms1g -Xmx2g -Djava.net.preferIPv4Stack=true"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:/jclouds-plugin}"/>
 </launchConfiguration>
