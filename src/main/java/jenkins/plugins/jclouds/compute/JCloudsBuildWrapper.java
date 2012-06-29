@@ -54,7 +54,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
     private final List<LoadBalancerMetadata> loadbalancer = Lists.newArrayList();
 
     // #2 Expose running nodes for later
-    private transient Iterable<RunningNode> runningNode;
+    private Iterable<RunningNode> runningNode;
 
     public Iterable<RunningNode> getRunningNodes() {
 	return runningNode;
