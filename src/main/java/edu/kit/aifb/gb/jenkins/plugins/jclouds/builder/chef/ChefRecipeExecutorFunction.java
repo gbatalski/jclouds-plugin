@@ -10,6 +10,7 @@ import static org.jclouds.scriptbuilder.domain.Statements.*;
 
 import hudson.model.labels.LabelAtom;
 
+import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +31,7 @@ import com.google.common.base.Predicate;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Ordering;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -79,7 +81,9 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 		    .runScriptOnNode(
 			    nodeMetadata.getId(),
 			    newStatementList(
-				    // exec("env LC_ALL=C && export DEBIAN_PRIORITY=critical && export DEBIAN_FRONTEND=noninteractive"),
+				    exec("env LC_ALL=C"),
+				    exec("export DEBIAN_PRIORITY=critical"),
+				    exec("export DEBIAN_FRONTEND=noninteractive"),
 				    exec(format(
 					    "export HOME_DIR=\"`getent passwd %1$s | cut -d: -f6`\" && export SOLO_DIR=$HOME_DIR/chef-solo",
 					    slaveTemplate.getJenkinsUser())),
@@ -163,20 +167,34 @@ public class ChefRecipeExecutorFunction implements Function<RunningNode, Boolean
 		    }));
 
 		    return newStatementList(toArray(
-			    transform(concat(cookbooks, distinctCookbooks), new Function<String, Statement>() {
-			@Override
-			public Statement apply(String input) {
-			    String statement = "knife cookbook %1$s install %2$s -c %3$s/solo.rb -VV -o %3$s/%4$s";
-			    String cookbookPath = "orig-cookbooks";
-			    String gem = "site";
-			    if (input.contains("github:")) {
-				cookbookPath = "cookbooks";
-				gem = "github";
+			   Ordering.<Statement>from(new Comparator<Statement>() {
+
+			    @Override
+			    public int compare(Statement o1, Statement o2) {
+
+			    if (o1.toString().contains("github") && !o2.toString().contains("github"))
+				return 1;
+			    if (o1.toString().contains("github") && o2.toString().contains("github"))
+				return 0;
+			    return -1;
+
 			    }
-			    return exec(format(statement, gem, input.replaceFirst("^(?:github:)?(.+)$", "$1"), pathToConfig,
-				    cookbookPath));
-			};
-		    }), Statement.class));
+			}).sortedCopy(transform(concat(cookbooks, distinctCookbooks), new Function<String, Statement>() {
+				@Override
+				public Statement apply(String input) {
+			    String statement = "knife cookbook %1$s install %2$s -c %3$s/solo.rb -y -VV %5$s -o %3$s/%4$s";
+				    String cookbookPath = "orig-cookbooks";
+				    String gem = "site";
+				    String skipSanitizing = "";
+				    if (input.contains("github:")) {
+					cookbookPath = "cookbooks";
+					gem = "github";
+					skipSanitizing = "-n";
+				    }
+				    return exec(format(statement, gem, input.replaceFirst("^(?:github:)?(.+)$", "$1"),
+					    pathToConfig, cookbookPath, skipSanitizing));
+				};
+		    })), Statement.class));
 		}
 	    }.apply(getRecipes());
 
