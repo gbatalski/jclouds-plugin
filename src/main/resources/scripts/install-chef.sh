@@ -2,6 +2,21 @@
 
 # This runs as root on the server
 
+ # catch and log the HUP and TERM signals 
+function on_hangup ()
+{
+    echo 'Hangup (SIGHUP) signal received'
+}
+
+function on_hangup ()
+{
+    echo 'Term (SIGTERM) signal received'
+}
+
+ 
+trap on_hangup SIGHUP
+trap on_sigterm SIGTERM
+
 chef_binary=`which chef-solo`
 knife_binary=`which knife`
 
@@ -34,35 +49,34 @@ if [ ! "$chef_binary" ] ; then
     SOLO_DIR=$HOME_DIR/chef-solo
     
     mkdir $SOLO_DIR
+    
+	# Data bags
+    mkdir -p $SOLO_DIR/data-bags
+	# cache
+	mkdir -p $SOLO_DIR/cache     
+	# git clone our cookbooks
+    mkdir -p $SOLO_DIR/cookbooks
+    # git clone original cookbooks
+    mkdir -p $SOLO_DIR/orig-cookbooks
+    
     chown -R $CURRENT_USER $SOLO_DIR
     chmod -R 774 $SOLO_DIR
     chmod -R +s $SOLO_DIR
-    cd $SOLO_DIR
-    
-	# Data bags
-    mkdir $SOLO_DIR/data-bags
-	# cache
-	mkdir $SOLO_DIR/cache     
-	# git clone our cookbooks
-    mkdir $SOLO_DIR/cookbooks
-    # git clone original cookbooks
-    mkdir $SOLO_DIR/orig-cookbooks
+    cd $SOLO_DIR    
     cd $SOLO_DIR/orig-cookbooks 
+    
     git init 
     touch .gitignore
     git config --system user.name "$CURRENT_USER" 
     git config --system user.email "$CURRENT_USER@localhost"
     git add . 
     git commit -am"Download cookbook repository created"
-    cd ..
-    cd $SOLO_DIR/cookbooks 
+    
+    cd ../cookbooks 
     git init 
     touch .gitignore
     git add . 
     git commit -am"Github cookbook repository created"
     cd ..
-    
-	# clone all with submodules e.g. recursive
-    #git clone --recursive git://github.com/gbatalski/cookbooks.git cookbooks
-    
+    	
 fi
