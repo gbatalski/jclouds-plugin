@@ -9,7 +9,6 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -139,8 +138,7 @@ public class JCloudsSlave extends Slave {
     */
    public void terminate() {
        final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-       if (compute.getNodeMetadata(nodeId) != null &&
-           compute.getNodeMetadata(nodeId).getState().equals(NodeState.RUNNING)) {
+	if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus() == NodeMetadata.Status.RUNNING) {
            if (stopOnTerminate) {
                LOGGER.info("Suspending the Slave : " + getNodeName());
                compute.suspendNode(nodeId);

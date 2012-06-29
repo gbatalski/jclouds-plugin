@@ -45,6 +45,7 @@ import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
+
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 
@@ -70,7 +71,7 @@ import com.google.inject.Module;
 
 /**
  * The JClouds version of the Jenkins Cloud.
- * 
+ *
  * @author Vijay Kiran
  */
 public class JCloudsCloud extends Cloud {
@@ -271,7 +272,7 @@ public class JCloudsCloud extends Cloud {
     /**
      * Provisions a new node manually (by clicking a button in the computer
      * list)
-     * 
+     *
      * @param req
      *            {@link StaplerRequest}
      * @param rsp
@@ -317,8 +318,8 @@ public class JCloudsCloud extends Cloud {
 	    if (NodeMetadata.class.isInstance(cm)) {
 		String nodeGroup = ((NodeMetadata) cm).getGroup();
 
-		if (getTemplate(nodeGroup) != null && !((NodeMetadata) cm).getState().equals(NodeState.SUSPENDED)
-			&& !((NodeMetadata) cm).getState().equals(NodeState.TERMINATED)) {
+		if (getTemplate(nodeGroup) != null && ((NodeMetadata) cm).getStatus() != NodeMetadata.Status.SUSPENDED
+			&& ((NodeMetadata) cm).getStatus() != NodeMetadata.Status.TERMINATED) {
 		    nodeCount++;
 		}
 	    }
