@@ -28,6 +28,7 @@ class RetrySupplierOnException implements Callable<NodeMetadata> {
          } catch (RuntimeException e) {
             // Something to log the e.getCause() which should be a
             // RunNodesException
+		e.printStackTrace();
          }
       }
 
