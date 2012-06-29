@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
+import jenkins.plugins.jclouds.compute.elb.EnhancedLoadBalancerService;
 
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.loadbalancer.domain.LoadBalancerMetadata;
@@ -57,23 +58,27 @@ public class CreateLoadbalancerAndDestroyOnError implements Function<Iterable<No
 
 	    @Override
 	    public LoadBalancerMetadata call() throws Exception {
-
-		LoadBalancerMetadata lbMetadata = JCloudsCloud
+		EnhancedLoadBalancerService lbService = JCloudsCloud
 			.getByName(loadBalancer.cloudName)
-			.getLb()
+			.getLb();
+		LoadBalancerMetadata  lbMetadata = lbService.getLoadBalancerMetadata(loadBalancer.loadBalancerName);
+		// destroy lb if already exists
+		// TODO: eventually update with new nodes but the operation
+		// should be implemented, if exists.
+		if(lbMetadata!=null)
+		    lbService.destroyLoadBalancer(lbMetadata.getId());
+
+
+		lbMetadata = lbService
 			.createLoadBalancerInLocation(null, loadBalancer.loadBalancerName, loadBalancer.protocol,
 				loadBalancer.loadBalancerPort, loadBalancer.instancePort, input);
 		if (loadBalancer.sticky == true) {
 		    // create sticky cookie policy
-		    JCloudsCloud
-			    .getByName(loadBalancer.cloudName)
-			    .getLb()
+		    lbService
 			    .createAppCookieStickinessPolicy(null, lbMetadata.getId(), loadBalancer.cookieName,
 				    loadBalancer.cookieName);
 		    // enable sticky cookie policy
-		    JCloudsCloud
-			    .getByName(loadBalancer.cloudName)
-			    .getLb()
+		    lbService
 			    .setLoadBalancingPoliciesOfListener(null, lbMetadata.getId(), loadBalancer.loadBalancerPort,
 				    loadBalancer.cookieName);
 		}
